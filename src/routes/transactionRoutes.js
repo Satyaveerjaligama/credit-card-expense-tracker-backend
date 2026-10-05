@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const Transaction = require('../models/Transaction');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
+const { getBillingCycleRange } = require('../utils/billingCycle');
 
 /**
  * Category heuristic helper for auto-categorization
@@ -156,15 +157,13 @@ router.post(
       await transaction.save();
 
       // Check current cycle spending to see if limit is reached or warning threshold crossed
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      const { cycleStart, cycleEnd } = getBillingCycleRange(req.user.billingCycleDay);
 
       const totalSpentAgg = await Transaction.aggregate([
         {
           $match: {
             user: req.user._id,
-            date: { $gte: firstDayOfMonth, $lte: lastDayOfMonth },
+            date: { $gte: cycleStart, $lte: cycleEnd },
           },
         },
         { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -393,12 +392,18 @@ router.post('/bulk-import', protect, async (req, res, next) => {
 
     const docs = items.map((item) => {
       const merchant = (item.merchant || 'Expense').trim();
+      const txnDate = item.date ? new Date(item.date) : new Date();
+      const yyyy = txnDate.getFullYear();
+      const mm = String(txnDate.getMonth() + 1).padStart(2, '0');
+      const billingMonth = `${yyyy}-${mm}`;
+
       const txn = new Transaction({
         user: req.user._id,
         amount: Number(item.amount) || 0,
         merchant,
         category: item.category || inferCategory(merchant),
-        date: item.date ? new Date(item.date) : new Date(),
+        date: txnDate,
+        billingMonth,
         paymentMethod: item.paymentMethod || 'Credit Card',
         source: 'statement_import',
       });

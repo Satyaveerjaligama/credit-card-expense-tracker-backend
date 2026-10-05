@@ -4,32 +4,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const { protect } = require('../middleware/auth');
-
-/**
- * Helper to calculate active billing cycle start and end dates
- */
-function getBillingCycleRange(billingCycleDay = 1) {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-  const currentDate = now.getDate();
-
-  let cycleStart, cycleEnd;
-
-  if (currentDate >= billingCycleDay) {
-    // Current cycle started this month on billingCycleDay
-    cycleStart = new Date(currentYear, currentMonth, billingCycleDay, 0, 0, 0, 0);
-    // Ends next month on billingCycleDay - 1
-    cycleEnd = new Date(currentYear, currentMonth + 1, billingCycleDay - 1, 23, 59, 59, 999);
-  } else {
-    // Current cycle started previous month on billingCycleDay
-    cycleStart = new Date(currentYear, currentMonth - 1, billingCycleDay, 0, 0, 0, 0);
-    // Ends this month on billingCycleDay - 1
-    cycleEnd = new Date(currentYear, currentMonth, billingCycleDay - 1, 23, 59, 59, 999);
-  }
-
-  return { cycleStart, cycleEnd };
-}
+const { getBillingCycleRange } = require('../utils/billingCycle');
 
 /**
  * @route   GET /api/limits/overview

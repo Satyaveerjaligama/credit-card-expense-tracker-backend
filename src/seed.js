@@ -4,6 +4,11 @@ const User = require('./models/User');
 const Transaction = require('./models/Transaction');
 
 async function seed() {
+  if (process.env.NODE_ENV === 'production' && !process.argv.includes('--force')) {
+    console.error('⚠️  Seed aborted: Cannot run database seeder in production without --force flag.');
+    process.exit(1);
+  }
+
   try {
     console.log('Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGODB_URI);

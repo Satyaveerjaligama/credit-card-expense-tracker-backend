@@ -95,4 +95,8 @@ transactionSchema.methods.setNotes = function (plainNotes) {
   }
 };
 
+// Compound indexes for high-performance querying and analytics
+transactionSchema.index({ user: 1, date: -1 });
+transactionSchema.index({ user: 1, billingMonth: 1 });
+
 module.exports = mongoose.model('Transaction', transactionSchema);

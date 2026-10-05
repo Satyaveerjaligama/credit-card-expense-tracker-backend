@@ -82,8 +82,17 @@ function maskCardNumber(last4 = 'XXXX') {
   return `•••• •••• •••• ${sanitized}`;
 }
 
+/**
+ * Validate that ENCRYPTION_KEY is present and properly formatted
+ */
+function validateSecurityConfig() {
+  getEncryptionKey();
+  return true;
+}
+
 module.exports = {
   encrypt,
   decrypt,
-  maskCardNumber
+  maskCardNumber,
+  validateSecurityConfig,
 };
